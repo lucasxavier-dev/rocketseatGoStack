@@ -1,2 +1,0 @@
-# rocketseatGoStack
-Rocketseat repository.
