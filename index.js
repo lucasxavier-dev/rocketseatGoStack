@@ -1,14 +1,47 @@
-const { response } = require('express');
+ const { response } = require('express');
 const express = require('express');
-const { uuid } = require('uuidv4'); //id único universal
+const { uuid, isUuid } = require('uuidv4'); //id único universal
 
 const app = express();
 
 app.use(express.json()); // serve p/ o express fazer a leitura de arquivos json
-//-----
 
- 
+
+
+//-----
+//Middleware - funciona como o jogo do telefone sem fío. Onde tem uma pessoa que pode mudar completamente o rumo da brincadeira passando uma informação diferente da inicial.
+    //para que algum trecho de código seja disparado automaticamente em uma requisição de código 
+
+    //Middleware = request, response
+     
 const projects = []; //armazenando informações dentro da variável projects
+
+     //mostra quais rotas e métodos estão sendo aplicados em uma requisição.
+function logRequests(req, res, next) {
+    const { method, url } = req;
+
+    const logLabel = `[${method.toUpperCase()}] ${url}`;
+
+    console.time(logLabel);
+
+    next(); //Próximo middleware
+
+    console.timeEnd(logLabel);
+}
+        //validate
+function validateProjectId(req, res, next) {
+    const { id } = req.params;//vem através                            
+
+    if (!isUuid(id)) {
+        return res.status(400).json({ error: 'Invalid project ID.'});
+    }
+
+    return next();
+}
+
+app.use(logRequests);
+
+app.use('/projects/:id', validateProjectId);
 
 
 
@@ -26,6 +59,7 @@ app.get('/projects', (req, res) => {
 
     return res.json(results);
 });
+
 
 
 
@@ -53,7 +87,7 @@ app.post('/projects', (req, res) => {
 
 
 //http://localhost:3333/projects/
-app.put('/projects/:id', (req, res) => {
+app.put('/projects/:id',  validateProjectId, (req, res) => {
     const { id } = req.params;
     const {title, owner} = req.body;
     
@@ -77,7 +111,7 @@ app.put('/projects/:id', (req, res) => {
 //----- Delete routes --------------------------------
 
 
-app.delete('/projects/:id', (req, res) => {
+app.delete('/projects/:id', validateProjectId, (req, res) => {
     const { id } = req.params;
 
     const projectIndex = projects.findIndex(project => project.id == id);
